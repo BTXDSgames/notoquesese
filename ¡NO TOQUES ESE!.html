@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>¡No Toques Ese!</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #222;
+    color: white;
+    margin: 0;
+}
+
+.screen {
+    display: none;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.active {
+    display: flex;
+}
+
+h1 {
+    font-size: 3em;
+}
+
+h2 {
+    font-size: 2em;
+}
+
+#vidasText {
+    font-size: 40px;
+    margin: 20px;
+}
+
+.buttons {
+    display: flex;
+    gap: 30px;
+}
+
+.circle-btn {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+#startBtn,
+#restartBtn {
+    padding: 15px 40px;
+    font-size: 24px;
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="startScreen" class="screen active">
+    <h1>🎮 ¡NO TOQUES ESE!</h1>
+    <button id="startBtn">START</button>
+</div>
+
+<div id="gameScreen" class="screen">
+    <h2 id="levelText">Nivel 1</h2>
+
+    <div id="vidasText">❤️❤️❤️</div>
+
+    <div class="buttons">
+        <button class="circle-btn" id="btn1">Botón 1</button>
+        <button class="circle-btn" id="btn2">Botón 2</button>
+    </div>
+</div>
+
+<div id="winScreen" class="screen">
+    <h1>🏆 FELICITACIONES 🏆</h1>
+    <h2>¡Completaste No Toques Ese!</h2>
+    <button id="restartBtn">Jugar otra vez</button>
+</div>
+
+<script>
+
+let nivel = 1;
+let vidas = 3;
+let botonCorrecto = 1;
+
+const TOTAL_NIVELES = 10;
+
+function mostrarPantalla(id) {
+
+    document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+}
+
+function actualizarVidas() {
+    document.getElementById("vidasText").textContent =
+        "❤️".repeat(vidas);
+}
+
+function sonidoNivelSuperado() {
+
+    const contexto = new AudioContext();
+
+    function tocar(freq, tiempo, duracion) {
+
+        const osc = contexto.createOscillator();
+        const gain = contexto.createGain();
+
+        osc.type = "sine";
+        osc.frequency.value = freq;
+
+        gain.gain.setValueAtTime(0.12, contexto.currentTime + tiempo);
+
+        osc.connect(gain);
+        gain.connect(contexto.destination);
+
+        osc.start(contexto.currentTime + tiempo);
+        osc.stop(contexto.currentTime + tiempo + duracion);
+    }
+
+    tocar(987, 0.00, 0.10);
+    tocar(1318, 0.12, 0.15);
+}
+
+function sonidoDerrota() {
+
+    const contexto = new AudioContext();
+
+    const osc = contexto.createOscillator();
+
+    osc.type = "sawtooth";
+    osc.frequency.value = 180;
+
+    osc.connect(contexto.destination);
+
+    osc.start();
+    osc.stop(contexto.currentTime + 0.25);
+}
+
+function sonidoGranVictoria() {
+
+    const contexto = new AudioContext();
+
+    function tocar(frecuencia, inicio, duracion) {
+
+        const osc = contexto.createOscillator();
+        const gain = contexto.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.value = frecuencia;
+
+        osc.connect(gain);
+        gain.connect(contexto.destination);
+
+        osc.start(contexto.currentTime + inicio);
+        osc.stop(contexto.currentTime + inicio + duracion);
+    }
+
+    // TIN
+    tocar(523, 0.0, 0.15);
+
+    // TIN
+    tocar(523, 0.2, 0.15);
+
+    // TIIIIIN
+    tocar(784, 0.4, 0.8);
+}
+
+function prepararNivel() {
+
+    botonCorrecto = Math.random() < 0.5 ? 1 : 2;
+
+    document.getElementById("levelText").textContent =
+        "Nivel " + nivel + " de " + TOTAL_NIVELES;
+}
+
+function iniciarJuego() {
+
+    nivel = 1;
+    vidas = 3;
+
+    actualizarVidas();
+    prepararNivel();
+
+    mostrarPantalla("gameScreen");
+}
+
+function elegirBoton(numero) {
+
+    if (numero === botonCorrecto) {
+
+        if (nivel === TOTAL_NIVELES) {
+
+            sonidoGranVictoria();
+
+            setTimeout(() => {
+                mostrarPantalla("winScreen");
+            }, 1400);
+
+        } else {
+
+            sonidoNivelSuperado();
+
+            nivel++;
+            prepararNivel();
+        }
+
+    } else {
+
+        sonidoDerrota();
+
+        vidas--;
+
+        actualizarVidas();
+
+        if (vidas <= 0) {
+
+            setTimeout(() => {
+                alert("💥 ¡Perdiste todas las vidas!");
+                mostrarPantalla("startScreen");
+            }, 500);
+        }
+    }
+}
+
+document.getElementById("startBtn").addEventListener("click", iniciarJuego);
+
+document.getElementById("restartBtn").addEventListener("click", iniciarJuego);
+
+document.getElementById("btn1").addEventListener("click", () => {
+    elegirBoton(1);
+});
+
+document.getElementById("btn2").addEventListener("click", () => {
+    elegirBoton(2);
+});
+
+</script>
+
+</body>
+</html>
